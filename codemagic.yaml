@@ -3,17 +3,22 @@ workflows:
     name: Android Build
     max_build_duration: 30
     instance_type: mac_mini_m2
+
     environment:
       flutter: stable
+
     scripts:
       - name: Generate Android directory
         script: |
           flutter create . --platforms=android
+
       - name: Get dependencies
         script: |
           flutter pub get
+
       - name: Build Android APK
         script: |
           flutter build apk --release
+
     artifacts:
       - build/**/outputs/**/*.apk
