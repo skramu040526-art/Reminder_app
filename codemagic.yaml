@@ -9,7 +9,7 @@ workflows:
       - name: Generate Android directory
         script: |
           flutter create . --platforms=android
-      - name: Get Flutter dependencies
+      - name: Get dependencies
         script: |
           flutter pub get
       - name: Build Android APK
@@ -17,4 +17,3 @@ workflows:
           flutter build apk --release
     artifacts:
       - build/**/outputs/**/*.apk
-      
