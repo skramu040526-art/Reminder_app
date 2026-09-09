@@ -12,6 +12,16 @@ workflows:
         script: |
           flutter create . --platforms=android
 
+      - name: Enable Core Library Desugaring
+        script: |
+          APP_GRADLE="android/app/build.gradle"
+          if [ -f "$APP_GRADLE" ]; then
+            # compileOptions এবং coreLibraryDesugaring যোগ করা
+            sed -i '' 's/compileOptions {/compileOptions {\n        coreLibraryDesugaringEnabled true/' "$APP_GRADLE" 2>/dev/null || sed -i 's/compileOptions {/compileOptions {\n        coreLibraryDesugaringEnabled true/' "$APP_GRADLE"
+            # dependency যোগ করা
+            sed -i '' 's/dependencies {/dependencies {\n    coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:2.0.4"/' "$APP_GRADLE" 2>/dev/null || sed -i 's/dependencies {/dependencies {\n    coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:2.0.4"/' "$APP_GRADLE"
+          fi
+
       - name: Get dependencies
         script: |
           flutter pub get
