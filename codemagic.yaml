@@ -14,13 +14,37 @@ workflows:
 
       - name: Enable Core Library Desugaring
         script: |
-          APP_GRADLE="android/app/build.gradle"
-          if [ -f "$APP_GRADLE" ]; then
-            # compileOptions এবং coreLibraryDesugaring যোগ করা
-            sed -i '' 's/compileOptions {/compileOptions {\n        coreLibraryDesugaringEnabled true/' "$APP_GRADLE" 2>/dev/null || sed -i 's/compileOptions {/compileOptions {\n        coreLibraryDesugaringEnabled true/' "$APP_GRADLE"
-            # dependency যোগ করা
-            sed -i '' 's/dependencies {/dependencies {\n    coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:2.0.4"/' "$APP_GRADLE" 2>/dev/null || sed -i 's/dependencies {/dependencies {\n    coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:2.0.4"/' "$APP_GRADLE"
-          fi
+          python3 - << 'EOF'
+          import os
+
+          # App level build.gradle বা build.gradle.kts খোঁজা
+          gradle_file = "android/app/build.gradle"
+          if not os.path.exists(gradle_file):
+              gradle_file = "android/app/build.gradle.kts"
+
+          if os.path.exists(gradle_file):
+              with open(gradle_file, "r") as f:
+                  content = f.read()
+
+              # compileOptions এ desugaring যোগ
+              if "coreLibraryDesugaringEnabled" not in content:
+                  if "compileOptions {" in content:
+                      content = content.replace("compileOptions {", "compileOptions {\n        coreLibraryDesugaringEnabled = true\n        isCoreLibraryDesugaringEnabled = true")
+
+              # dependencies ব্লকে desugar dependency যোগ
+              desugar_dep = '    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")\n'
+              if "coreLibraryDesugaring" not in content:
+                  if "dependencies {" in content:
+                      content = content.replace("dependencies {", f"dependencies {{\n{desugar_dep}")
+                  else:
+                      content += f"\ndependencies {{\n{desugar_dep}}}\n"
+
+              with open(gradle_file, "w") as f:
+                  f.write(content)
+              print("Successfully injected desugaring into:", gradle_file)
+          else:
+              print("Gradle file not found!")
+          EOF
 
       - name: Get dependencies
         script: |
